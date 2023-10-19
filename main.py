@@ -8,12 +8,12 @@
 # 7) команда для +денег
 # 8) команда для показа последних 10 трат
 # 9) команда для показа баланса
-10) команда для показа кнопок
-11) /CheckLongHistoryOfSpending
-11)команда для удаления последней операции
-12)ежедневное напомние
-13)Создавать таблицу со всеми данными по какой-то команде
-14)залить на хост
+# 10) команда для показа кнопок
+# 11)команда для удаления последней операции
+12) /CheckLongHistoryOfSpending
+14)ежедневное напомние
+14)Создавать таблицу со всеми данными по какой-то команде
+16)залить на хост
 '''
 
 
@@ -96,6 +96,25 @@ def manual_input_step2(message, time_now, cost):
             bot.send_message(message.chat.id, f"Произошла  СУБД: {Ex}")
 
 
+@bot.message_handler(commands=['remove_last'])
+def remove_last(message):
+    db = sqlite3.connect('main.sql')
+    cursor = db.cursor()
+    cursor.execute(f'DELETE FROM user{message.chat.id} WHERE rowid = (SELECT max(rowid) FROM user{message.chat.id})')
+    db.commit()
+    db.close()
+    bot.send_message(message.chat.id, 'Успешно!')
+
+
+@bot.message_handler(commands=['see_buttons'])
+def see_buttons(message):
+    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    btn1 = types.KeyboardButton("33р -> электричка")
+    btn2 = types.KeyboardButton("16р -> электричка")
+    btn3 = types.KeyboardButton("60р -> маршрутка")
+    markup.add(btn1, btn2, btn3)
+
+    bot.send_message(message.chat.id, 'Выберите:', reply_markup=markup)
 
 @bot.message_handler(commands=['balance'])
 def see_balance(message):
@@ -111,12 +130,8 @@ def see_balance(message):
 def last_spending(message):
     db = sqlite3.connect('main.sql')
     cursor = db.cursor()
-    cursor.execute(f'SELECT * FROM user{message.chat.id}')
-    all_last = cursor.fetchall()
-    if len(all_last) >= 10:
-        last10 = all_last[:10]
-    else:
-        last10 = all_last
+    cursor.execute(f'SELECT * FROM user{message.chat.id} ORDER BY rowid DESC LIMIT 10')
+    last10 = cursor.fetchall()
 
     num = 0
     last10_str = ''
