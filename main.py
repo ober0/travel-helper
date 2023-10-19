@@ -7,8 +7,9 @@
 # 6)бд для баланса
 # 7) команда для +денег
 # 8) команда для показа последних 10 трат
-9) команда для показа баланса
+# 9) команда для показа баланса
 10) команда для показа кнопок
+11) /CheckLongHistoryOfSpending
 11)команда для удаления последней операции
 12)ежедневное напомние
 13)Создавать таблицу со всеми данными по какой-то команде
@@ -96,6 +97,15 @@ def manual_input_step2(message, time_now, cost):
 
 
 
+@bot.message_handler(commands=['balance'])
+def see_balance(message):
+    db = sqlite3.connect('main.sql')
+    cursor = db.cursor()
+    cursor.execute(f'SELECT balance FROM UserBalance{message.chat.id} where rowid = 1')
+    balance = cursor.fetchone()[0]
+    db.close()
+    bot.send_message(message.chat.id, f'Ваш баланс: {balance}руб.')
+
 
 @bot.message_handler(commands=['last'])
 def last_spending(message):
@@ -118,7 +128,7 @@ def last_spending(message):
             spend_time = i[2]
             last10_str += f'{num}) {spend_name} - {spend_cost}руб ({spend_time})\n'
     bot.send_message(message.chat.id, f'<b>Ваши последние траты:</b>\n{last10_str}', parse_mode='html')
-
+    bot.message_handler(message.chat.id, 'Для просмотра более большой истории - /CheckLongHistoryOfSpending')
 @bot.message_handler(commands=["start"])
 def start(message):
     db = sqlite3.connect('main.sql')
