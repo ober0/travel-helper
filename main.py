@@ -10,10 +10,9 @@
 # 9) команда для показа баланса
 # 10) команда для показа кнопок
 # 11)команда для удаления последней операции
-12) /CheckLongHistoryOfSpending
-14)ежедневное напомние
-14)Создавать таблицу со всеми данными по какой-то команде
-16)залить на хост
+# 12) /CheckLongHistoryOfSpending
+13)ежедневное напомние
+14)залить на хост
 '''
 
 
@@ -23,6 +22,8 @@ import sqlite3
 from telebot import types
 import re
 import datetime
+import csv
+
 
 bot = telebot.TeleBot("6402207060:AAFIYlwlnxbLkN8MgXZSPUgnMbxp0zuf7FU")
 
@@ -95,6 +96,23 @@ def manual_input_step2(message, time_now, cost):
         except Exception as Ex:
             bot.send_message(message.chat.id, f"Произошла  СУБД: {Ex}")
 
+
+@bot.message_handler(commands=['CheckLongHistoryOfSpending'])
+def create_table(message):
+    db = sqlite3.connect('main.sql')
+    cursor = db.cursor()
+    cursor.execute(f'SELECT * FROM user{message.chat.id} ORDER BY rowid DESC')
+    all_data = cursor.fetchall()
+    for i in range(len(all_data)):
+        all_data[i] = list(all_data[i])
+    with open(f'tables/user-{message.chat.id}-history.csv', 'w', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile, delimiter=';', lineterminator='\n')
+        for row in all_data:
+            csvwriter.writerow(row)
+    bot.send_message(message.chat.id, 'Успешно! Таблица со всеми данными:')
+
+    file = open(f'tables/user-{message.chat.id}-history.csv', 'r')
+    bot.send_document(message.chat.id, file)
 
 @bot.message_handler(commands=['remove_last'])
 def remove_last(message):
