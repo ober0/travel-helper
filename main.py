@@ -117,7 +117,14 @@ def create_table(message):
 def remove_last(message):
     db = sqlite3.connect('main.sql')
     cursor = db.cursor()
+    cursor.execute(f'SELECT cost FROM user{message.chat.id} WHERE rowid = (SELECT max(rowid) FROM user{message.chat.id})')
+    last_operation_cost = cursor.fetchone()[0]
     cursor.execute(f'DELETE FROM user{message.chat.id} WHERE rowid = (SELECT max(rowid) FROM user{message.chat.id})')
+    db.commit()
+    cursor.execute(f"SELECT balance FROM UserBalance{message.chat.id} WHERE rowid = 1")
+    bal = cursor.fetchone()[0]
+    bal += last_operation_cost
+    cursor.execute(f"UPDATE UserBalance{message.chat.id} SET balance = {bal}")
     db.commit()
     db.close()
     bot.send_message(message.chat.id, 'Успешно!')
